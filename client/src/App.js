@@ -32,7 +32,7 @@ function App() {
   const moviesPerPage = 15;
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/movies")
+    fetch("https://aoopnosql.onrender.com/api/movies")
       .then((res) => res.json())
       .then((data) => setMovies(data))
       .catch((err) => console.error("Error fetching movies:", err));
@@ -44,7 +44,7 @@ function App() {
   };
 
   const fetchMovieDetails = (id) => {
-    fetch(`http://localhost:4000/api/movies/${id}`)
+    fetch(`https://aoopnosql.onrender.com/api/movies/${id}`)
       .then((res) => res.json())
       .then((data) => setSelectedMovie(data))
       .catch((err) => console.error("Error fetching movie details:", err));
@@ -59,7 +59,7 @@ function App() {
       text: newComment,
       date: new Date().toISOString(),
     };
-    fetch("http://localhost:4000/api/comments", {
+    fetch("https://aoopnosql.onrender.com/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -76,7 +76,7 @@ function App() {
   };
 
   const handleDeleteComment = (id) => {
-    fetch(`http://localhost:4000/api/comments/${id}`, {
+    fetch(`https://aoopnosql.onrender.com/api/comments/${id}`, {
       method: "DELETE",
     })
       .then(() => {
