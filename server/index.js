@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
 app.use(cors());
@@ -59,8 +60,14 @@ const Comment = mongoose.model("Comment", commentSchema, "comments");
 // GET /api/movies -> filmes com comentários embutidos (limit 50)
 app.get("/api/movies", async (req, res) => {
   try {
-    const movies = await Movie.aggregate([
-      { $limit: 50 },
+    // 1) Grab a batch of candidates (say 100) that at least have a non-empty poster
+    const candidates = await Movie.aggregate([
+      {
+        $match: {
+          poster: { $exists: true, $nin: ["", "N/A"] },
+        },
+      },
+      { $limit: 100 },
       {
         $lookup: {
           from: "comments",
@@ -75,7 +82,25 @@ app.get("/api/movies", async (req, res) => {
         },
       },
     ]);
-    res.json(movies);
+
+    const validMovies = [];
+    // 2) Check each poster URL with a HEAD request
+    await Promise.all(
+      candidates.map(async (m) => {
+        if (validMovies.length >= 50) return; // we only need 50 final
+        try {
+          const head = await axios.head(m.poster, { timeout: 3000 });
+          const ct = head.headers["content-type"] || "";
+          if (head.status === 200 && ct.toLowerCase().startsWith("image/")) {
+            validMovies.push(m);
+          }
+        } catch (err) {
+          // either timeout, 404, non-image, etc. → skip
+        }
+      })
+    );
+
+    res.json(validMovies);
   } catch (error) {
     console.error("Erro na rota GET /api/movies:", error);
     res.status(500).json({ error: "Failed to fetch movies" });
